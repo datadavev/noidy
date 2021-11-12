@@ -6,7 +6,7 @@ import os
 import click
 import logging
 import json
-import fark.minter
+import fark.n2tminter
 
 @click.group()
 @click.pass_context
@@ -19,12 +19,26 @@ def main(ctx):
 @main.command()
 @click.pass_context
 @click.argument("naan")
-@click.argument("shoulder")
+@click.argument("prefix")
 @click.option("-n", "--count", help="Number of identifiers to mint", default=1)
-def mint(ctx, naan, shoulder, count):
-    prefix = f"{naan}/{shoulder}"
-    minter = fark.minter.Minter(prefix)
-    state_file = f"fark_{naan}~{shoulder}.json"
+def mint(ctx, naan, prefix, count):
+    """
+    Mint next sequence of identifiers for given NAAN and prefix.
+
+    \b
+    Args:
+        naan:  Name Assigning Authority Number
+        prefix: NAAN/prefix{MINTED}
+        count: Number of identifiers to mint (1)
+
+    \b
+    Returns:
+        Identifiers, one per line of stdout
+
+    """
+    shoulder = f"{naan}/{prefix}"
+    minter = fark.n2tminter.N2TMinter(shoulder)
+    state_file = f"fark_{naan}~{prefix}.json"
     if os.path.exists(state_file):
         with open(state_file, "r") as inf:
             state = json.load(inf)
@@ -32,7 +46,7 @@ def mint(ctx, naan, shoulder, count):
 
     res = minter.mint(count=count)
     for ark in res:
-        print(ark)
+        print(f"ark:{shoulder}{ark}")
 
     with open(state_file, "w") as outf:
         json.dump(minter.asDict(), outf)

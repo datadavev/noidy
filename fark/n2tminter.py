@@ -1,13 +1,23 @@
 """
-Implements ARK minting
+Implements stateful identifier minting
 
-This implementation borrows heavily from the EZID minter implementation
-though persists state in JSON instead of berkeley db.
+This implementation borrows heavily from the EZID minter implementation. The
+main change is persistence of state in a plain python dict instead of
+using Berkeley DB.
 
+See https://github.com/CDLUC3/ezid for original implementation.
+
+Minted identifiers are short strings generated in sequence
+for a given state.
+
+This minter must be used in a singleton pattern (one, and only one,
+instance per state) otherwise collisions will occur.
 """
 
+import typing
 import logging
 import re
+import fark
 
 # fmt:off
 XDIG_DICT = {
@@ -36,18 +46,26 @@ class _Drand48:
     """
 
     def __init__(self, seed):
-        L.debug("drand48 seed=%s", seed)
         self.state = (seed << 16) + 0x330E
 
-    def drand(self):
+    def drand(self) -> int:
         self.state = (25214903917 * self.state + 11) & (2 ** 48 - 1)
         rnd = self.state / 2 ** 48
-        L.debug("drand48 value=%s", rnd)
         return rnd
 
 
-class Minter:
-    def __init__(self, shoulder_str, mask_str="eedk"):
+class N2TMinter(fark.Minter):
+    """ Implements a stateful minter using the same algorithm as N2T and EZID.
+    """
+    def __init__(self, shoulder_str: str, mask_str: str = "eedk"):
+        """
+
+        Args:
+            shoulder_str:
+            mask_str:
+        """
+        super().__init__()
+        self.name = "N2tMinter"
         self.active_counter_list = None
         self.inactive_counter_list = None
         self.counter_list = []
@@ -66,8 +84,14 @@ class Minter:
         self.atlast_str = "add3"
         self.shoulder = shoulder_str
 
-    def asDict(self):
+    def asDict(self) -> dict:
+        """ Presents state of self as a dict.
+
+        Returns:
+            dict with state information in similar format to N2T and EZID
+        """
         d = {
+            "name": self.name,
             "basecount": self.base_count,
             "oacounter": self.combined_count,
             "oatop": self.max_combined_count,
@@ -88,7 +112,16 @@ class Minter:
             }
         return d
 
-    def fromDict(self, d):
+    def fromDict(self, d: dict) -> None:
+        """ Loads state of self from provided dict.
+
+        Args:
+            d: Dict of same structure as produced by .asDict()
+
+        Returns:
+            Nothing
+        """
+        self.name = d.get("name", self.name)
         self.base_count = d.get("basecount")
         self.combined_count = d.get("oacounter")
         self.max_combined_count = d.get("oatop")
@@ -113,8 +146,13 @@ class Minter:
                 break
             i += 1
 
-    def mint(self, count=1):
-        """Generate one or more identifiers.
+    def mint(self, count: int = 1) -> typing.Generator[str, None, None]:
+        """Yield one or more identifiers.
+
+        The generated strings are unique for the sequence as represented
+        by the state of self. Repeated calls from the same starting state
+        will yield the same strings. Hence the ending state must be
+        used for a subsequent call.
 
         Args:
             count (int): Number of identifiers to yield.
@@ -134,30 +172,7 @@ class Minter:
                 xdig_str += self._get_check_char(minted_id)
             yield xdig_str
 
-    def create(self, shoulder_str, mask_str="eedk"):
-        """Set minter to initial, unused state."""
-        # self._bdb.clear()
-
-        self.template_str = "{}{{}}".format(shoulder_str, mask_str)
-        self.mask_str = mask_str
-
-        # m = re.match(r'(.*){{(.*)}}', template_str)
-        # if not m:
-        #     raise exc.MinterError('Invalid template: {}'.format(template_str))
-
-        self.base_count = 0
-        self.combined_count = 0
-        self.max_combined_count = 0
-        self.total_count = 0
-        self.atlast_str = "add0"
-        self._extend_template()
-        self.atlast_str = "add3"
-
-        # Values not used by the EZID minter. We set them to increase the chance that
-        # the minter can be read by N2T or other implementations.
-        self.shoulder = shoulder_str
-        self.original_template = self.template_str
-        self.origmask = self.mask_str
+    # -- Internal methods --
 
     def _next_state(self):
         """Step the minter to the next state."""
