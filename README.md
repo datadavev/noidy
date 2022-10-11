@@ -1,4 +1,4 @@
-# GHARK
+# README for noidy
 
 Experimental.
 
