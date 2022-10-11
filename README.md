@@ -9,7 +9,7 @@ Persists the generator state to JSON.
 ## Installation
 
 ```
-git clone https://github.com/datadavev/ghark.git
+git clone https://github.com/datadavev/noidy.git
 poetry install 
 ```
 
