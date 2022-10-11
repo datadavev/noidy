@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "fark"
-version = "0.1.0"
-description = "Free ARK minting and resolution"
+name = "noidy"
+version = "0.2.0"
+description = "NOID generator in python with JSON persistence."
 authors = ["datadavev <605409+datadavev@users.noreply.github.com>"]
 license = "MIT"
 
@@ -17,4 +17,4 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-fark = 'fark.__main__:main'
+noid = 'noidy.__main__:main'

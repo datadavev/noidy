@@ -17,7 +17,7 @@ instance per state) otherwise collisions will occur.
 import typing
 import logging
 import re
-import fark
+import noidy
 
 # fmt:off
 XDIG_DICT = {
@@ -54,7 +54,7 @@ class _Drand48:
         return rnd
 
 
-class N2TMinter(fark.Minter):
+class N2TMinter(noidy.Minter):
     """ Implements a stateful minter using the same algorithm as N2T and EZID.
     """
     def __init__(self, shoulder_str: str, mask_str: str = "eedk"):

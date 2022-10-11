@@ -6,7 +6,7 @@ import os
 import click
 import logging
 import json
-import fark.n2tminter
+import noidy.n2tminter
 
 @click.group()
 @click.pass_context
@@ -37,8 +37,8 @@ def mint(ctx, naan, prefix, count):
 
     """
     shoulder = f"{naan}/{prefix}"
-    minter = fark.n2tminter.N2TMinter(shoulder)
-    state_file = f"fark_{naan}~{prefix}.json"
+    minter = noidy.n2tminter.N2TMinter(shoulder)
+    state_file = f"noid_{naan}-{prefix}.json"
     if os.path.exists(state_file):
         with open(state_file, "r") as inf:
             state = json.load(inf)
